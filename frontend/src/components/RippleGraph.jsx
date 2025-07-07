@@ -8,6 +8,7 @@ import {
   useEdgesState,
   Panel
 } from 'reactflow';
+import 'reactflow/dist/style.css';
 import dagre from 'dagre';
 import { buildDependencyGraph, graphToReactFlow, findDownstreamNodes, findUpstreamNodes } from '../utils/graphBuilder';
 import { parseFiles } from '../utils/parser';
@@ -19,7 +20,7 @@ const FileNode = ({ data, selected }) => {
   const { theme } = useTheme();
   
   return (
-    <div className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+    <div className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 min-w-[120px] ${
       selected 
         ? theme === 'dark' 
           ? 'bg-blue-900 border-blue-400 shadow-lg shadow-blue-400/50' 
@@ -46,7 +47,7 @@ const FunctionNode = ({ data, selected }) => {
   const { theme } = useTheme();
   
   return (
-    <div className={`px-3 py-2 rounded-lg border-2 transition-all duration-200 ${
+    <div className={`px-3 py-2 rounded-lg border-2 transition-all duration-200 min-w-[100px] ${
       selected 
         ? theme === 'dark' 
           ? 'bg-purple-900 border-purple-400 shadow-lg shadow-purple-400/50' 
@@ -111,6 +112,7 @@ export default function RippleGraph({ files }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipData, setTooltipData] = useState(null);
   const [layoutDirection, setLayoutDirection] = useState('TB');
+  const [error, setError] = useState(null);
   const { theme } = useTheme();
 
   // Parse files and build graph
@@ -119,6 +121,7 @@ export default function RippleGraph({ files }) {
 
     const buildGraph = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         console.log('Parsing files...', files.length);
         // Filter for JavaScript/TypeScript files only
@@ -129,6 +132,7 @@ export default function RippleGraph({ files }) {
         
         if (jsFiles.length === 0) {
           console.log('No JavaScript/TypeScript files found');
+          setError('No JavaScript/TypeScript files found in the uploaded project.');
           setIsLoading(false);
           return;
         }
@@ -143,6 +147,7 @@ export default function RippleGraph({ files }) {
         
         if (flowNodes.length === 0) {
           console.log('No nodes generated from graph');
+          setError('No dependencies found in the analyzed files.');
           setIsLoading(false);
           return;
         }
@@ -158,6 +163,7 @@ export default function RippleGraph({ files }) {
         setEdges(layoutedEdges);
       } catch (error) {
         console.error('Error building graph:', error);
+        setError(`Failed to build dependency graph: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -285,6 +291,34 @@ export default function RippleGraph({ files }) {
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
           }`}>
             Parsing {files?.length || 0} files
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`h-full flex items-center justify-center ${
+        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
+        <div className="text-center">
+          <div className={`mb-4 ${
+            theme === 'dark' ? 'text-red-400' : 'text-red-500'
+          }`}>
+            <svg className="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className={`text-lg font-medium mb-2 ${
+            theme === 'dark' ? 'text-red-400' : 'text-red-500'
+          }`}>
+            Error Building Graph
+          </h3>
+          <p className={`text-sm ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            {error}
           </p>
         </div>
       </div>

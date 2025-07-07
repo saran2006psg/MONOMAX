@@ -97,38 +97,6 @@
   @apply border-l-2 border-blue-500 dark:border-blue-400;
 }
 
-/* Import React Flow styles */
-@import 'reactflow/dist/style.css';
-
-/* React Flow styles */
-.react-flow__node {
-  @apply transition-all duration-200;
-}
-
-.react-flow__edge {
-  @apply transition-all duration-200;
-}
-
-.react-flow__controls {
-  @apply shadow-lg;
-}
-
-.react-flow__controls.dark {
-  @apply bg-gray-800 border-gray-700;
-}
-
-.react-flow__controls.dark button {
-  @apply bg-gray-700 border-gray-600 text-gray-300;
-}
-
-.react-flow__controls.dark button:hover {
-  @apply bg-gray-600;
-}
-
-.react-flow__minimap.dark {
-  @apply bg-gray-800 border-gray-700;
-}
-
 /* Better text selection */
 ::selection {
   @apply bg-blue-200 dark:bg-blue-800;

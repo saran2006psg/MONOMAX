@@ -1,4 +1,4 @@
-import { Graph } from 'graphlib/lib/graph.js';
+import { Graph } from 'graphlib';
 
 // Create a dependency graph from parsed files
 export function buildDependencyGraph(parsedFiles) {
@@ -14,7 +14,7 @@ export function buildDependencyGraph(parsedFiles) {
     graph.setNode(fileId, {
       id: fileId,
       type: 'file',
-      label: file.filename,
+      label: file.filename.split('/').pop() || file.filename,
       filename: file.filename,
       functions: file.functions.length,
       imports: file.imports.length
@@ -66,8 +66,6 @@ export function buildDependencyGraph(parsedFiles) {
   
   // Create edges for function calls
   parsedFiles.forEach(file => {
-    const sourceFileId = fileMap.get(file.filename);
-    
     file.functionCalls.forEach(call => {
       // Try to find the function in the same file first
       let targetFunctionId = functionMap.get(`${file.filename}:${call.name}`);
@@ -156,17 +154,6 @@ export function graphToReactFlow(graph) {
       type: nodeData.type === 'file' ? 'fileNode' : 'functionNode',
       data: nodeData,
       position: { x: 0, y: 0 }, // Will be set by layout algorithm
-      style: {
-        background: nodeData.type === 'file' ? '#e1f5fe' : '#f3e5f5',
-        border: `2px solid ${nodeData.type === 'file' ? '#0277bd' : '#7b1fa2'}`,
-        borderRadius: '8px',
-        padding: '10px',
-        fontSize: '12px',
-        fontWeight: 'bold',
-        color: nodeData.type === 'file' ? '#0277bd' : '#7b1fa2',
-        minWidth: '120px',
-        textAlign: 'center'
-      }
     });
   });
   
