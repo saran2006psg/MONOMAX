@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RotateCcw } from 'lucide-react';
+import { Search, RotateCcw, FolderOpen, Code, Users, Clock } from 'lucide-react';
 import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { FunctionList } from './FunctionList';
 import { ThemeToggle } from './ThemeToggle';
 import { ProjectData, FileNode, CodeSymbol, SearchResult } from '../types';
+import { useTheme } from '../hooks/useTheme';
 import axios from 'axios';
 
 interface ExplorerPageProps {
@@ -19,6 +20,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [, setIsSearching] = useState(false);
+  const { theme } = useTheme();
 
   const handleFileSelect = async (file: FileNode) => {
     if (file.type === 'file') {
@@ -79,30 +81,87 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
   }, [searchTerm]);
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className={`h-screen flex flex-col transition-colors duration-300 ${
+      theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className={`border-b px-6 py-4 transition-colors duration-300 ${
+        theme === 'dark' 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {projectData.projectName}
-            </h1>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-              <span>{projectData.totalFiles} files</span>
-              <span>•</span>
-              <span>{projectData.totalLines} lines</span>
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-lg ${
+                theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
+              }`}>
+                <FolderOpen className={`w-6 h-6 ${
+                  theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                }`} />
+              </div>
+              <h1 className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                {projectData.projectName}
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
+                <Code className={`w-4 h-4 ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {projectData.totalFiles} files
+                </span>
+              </div>
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
+                <Users className={`w-4 h-4 ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {projectData.totalLines} lines
+                </span>
+              </div>
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
+                <Clock className={`w-4 h-4 ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Analyzed
+                </span>
+              </div>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-400'
+              }`} />
               <input
                 type="text"
                 placeholder="Search codebase..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`pl-10 pr-4 py-2 w-64 rounded-lg border transition-colors duration-200 ${
+                  theme === 'dark' 
+                    ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:border-blue-500' 
+                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
             </div>
             
@@ -110,7 +169,11 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
             
             <button
               onClick={onReset}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
             >
               <RotateCcw className="w-4 h-4" />
               <span>New Project</span>
@@ -122,7 +185,25 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* File Tree */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className={`w-80 border-r flex flex-col transition-colors duration-300 ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className={`p-4 border-b ${
+            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          }`}>
+            <h2 className={`text-lg font-semibold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
+              Project Files
+            </h2>
+            <p className={`text-sm ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Navigate through your codebase
+            </p>
+          </div>
           <FileTree
             files={projectData.files}
             selectedFile={selectedFile?.path}
@@ -131,7 +212,9 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
         </div>
 
         {/* Code Viewer */}
-        <div className="flex-1 bg-white dark:bg-gray-800 flex flex-col">
+        <div className={`flex-1 flex flex-col transition-colors duration-300 ${
+          theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+        }`}>
           <CodeViewer
             selectedFile={selectedFile}
             fileContent={fileContent}
@@ -139,14 +222,24 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
         </div>
 
         {/* Function List & Search Results */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className={`w-80 border-l flex flex-col transition-colors duration-300 ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
           {searchResults.length > 0 ? (
             <div className="h-full flex flex-col">
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className={`p-4 border-b ${
+                theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+              }`}>
+                <h2 className={`text-lg font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
                   Search Results
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className={`text-sm ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   {searchResults.length} results for "{searchTerm}"
                 </p>
               </div>
@@ -155,19 +248,31 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
                   {searchResults.map((result, index) => (
                     <div
                       key={index}
-                      className="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150"
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-150 ${
+                        theme === 'dark' 
+                          ? 'hover:bg-gray-700 border border-gray-700' 
+                          : 'hover:bg-gray-50 border border-gray-200'
+                      }`}
                       onClick={() => {
                         const file = projectData.files.find(f => f.path === result.file);
                         if (file) handleFileSelect(file);
                       }}
                     >
-                      <div className="font-medium text-gray-900 dark:text-white text-sm">
+                      <div className={`font-medium text-sm ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {result.file.split('/').pop()}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <div className={`text-xs mb-1 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                         Line {result.line} • {result.symbolKind}
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                      <div className={`text-xs p-2 rounded ${
+                        theme === 'dark' 
+                          ? 'text-gray-300 bg-gray-700' 
+                          : 'text-gray-600 bg-gray-50'
+                      }`}>
                         {result.context}
                       </div>
                     </div>

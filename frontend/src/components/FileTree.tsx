@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen } from 'lucide-react';
 import { FileNode } from '../types';
+import { useTheme } from '../hooks/useTheme';
 
 interface FileTreeProps {
   files: FileNode[];
@@ -17,6 +18,7 @@ interface FileTreeNodeProps {
 
 const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, level, selectedFile, onFileSelect }) => {
   const [isExpanded, setIsExpanded] = useState(level < 2);
+  const { theme } = useTheme();
 
   const handleClick = () => {
     if (node.type === 'folder') {
@@ -29,13 +31,19 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, level, selectedFile, 
   const getFileIcon = () => {
     if (node.type === 'folder') {
       return isExpanded ? (
-        <FolderOpen className="w-4 h-4 text-blue-500" />
+        <FolderOpen className={`w-4 h-4 ${
+          theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
+        }`} />
       ) : (
-        <Folder className="w-4 h-4 text-blue-500" />
+        <Folder className={`w-4 h-4 ${
+          theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
+        }`} />
       );
     }
     
-    return <File className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
+    return <File className={`w-4 h-4 ${
+      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+    }`} />;
   };
 
   const isSelected = selectedFile === node.path;
@@ -43,10 +51,14 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, level, selectedFile, 
   return (
     <div>
       <div
-        className={`flex items-center px-2 py-1 rounded-md cursor-pointer transition-colors duration-150 ${
+        className={`flex items-center px-2 py-1 rounded-md cursor-pointer transition-all duration-150 ${
           isSelected
-            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? theme === 'dark'
+              ? 'bg-blue-900/30 text-blue-300 border border-blue-800/50'
+              : 'bg-blue-100 text-blue-800 border border-blue-200'
+            : theme === 'dark'
+              ? 'hover:bg-gray-700 text-gray-300'
+              : 'hover:bg-gray-100 text-gray-700'
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
@@ -54,14 +66,20 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, level, selectedFile, 
         {node.type === 'folder' && (
           <span className="mr-1">
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className={`w-4 h-4 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className={`w-4 h-4 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             )}
           </span>
         )}
         {getFileIcon()}
-        <span className="ml-2 text-sm font-medium truncate text-gray-700 dark:text-gray-300">{node.name}</span>
+        <span className="ml-2 text-sm font-medium truncate">
+          {node.name}
+        </span>
       </div>
       
       {node.type === 'folder' && isExpanded && node.children && (
@@ -83,11 +101,8 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, level, selectedFile, 
 
 export const FileTree: React.FC<FileTreeProps> = ({ files, selectedFile, onFileSelect }) => {
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">File Explorer</h2>
-      </div>
-      <div className="p-2">
+    <div className="h-full overflow-y-auto flex-1">
+      <div className="p-2 space-y-1">
         {files.map((file, index) => (
           <FileTreeNode
             key={`${file.path}-${index}`}

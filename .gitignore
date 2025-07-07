@@ -1,4 +1,4 @@
-# Logs
+                # Logs
 logs
 *.log
 npm-debug.log*
@@ -23,3 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Backend uploads directory
+backend/uploads/
+
+# OS generated files
+Thumbs.db
+.DS_Store?
+ehthumbs.db
+Icon?

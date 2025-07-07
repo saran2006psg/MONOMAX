@@ -9,10 +9,16 @@
   
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
   html {
     @apply scroll-smooth;
+  }
+  
+  /* Ensure Monaco Editor themes work properly */
+  .monaco-editor {
+    @apply transition-colors duration-300;
   }
 }
 
@@ -40,6 +46,20 @@
   .input-field {
     @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent;
   }
+  
+  /* Improved animations */
+  .fade-in-up {
+    @apply opacity-0 translate-y-4 transition-all duration-500 ease-out;
+  }
+  
+  .fade-in-up.active {
+    @apply opacity-100 translate-y-0;
+  }
+  
+  /* Better focus states */
+  .focus-ring {
+    @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900;
+  }
 }
 
 /* Custom scrollbar */
@@ -57,4 +77,55 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* File tree scrollbar */
+.file-tree::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-tree::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.file-tree::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+/* Code editor improvements */
+.monaco-editor .view-overlays .current-line {
+  @apply border-l-2 border-blue-500 dark:border-blue-400;
+}
+
+/* Better text selection */
+::selection {
+  @apply bg-blue-200 dark:bg-blue-800;
+}
+
+/* Improved button hover states */
+button:hover {
+  @apply transform scale-105 transition-transform duration-200;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 animate-pulse;
+}
+
+/* Error states */
+.error-border {
+  @apply border-red-300 dark:border-red-700;
+}
+
+.error-text {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Success states */
+.success-border {
+  @apply border-green-300 dark:border-green-700;
+}
+
+.success-text {
+  @apply text-green-600 dark:text-green-400;
 }
