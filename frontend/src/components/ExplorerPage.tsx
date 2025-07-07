@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RotateCcw, FolderOpen, Code, Users, Clock } from 'lucide-react';
+import { Search, RotateCcw, FolderOpen, Code, Users, Clock, GitBranch } from 'lucide-react';
 import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { FunctionList } from './FunctionList';
+import RippleGraph from './RippleGraph';
 import { ThemeToggle } from './ThemeToggle';
 import { ProjectData, FileNode, CodeSymbol, SearchResult } from '../types';
 import { useTheme } from '../hooks/useTheme';
@@ -19,6 +20,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
   const [currentSymbols, setCurrentSymbols] = useState<CodeSymbol[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [activeTab, setActiveTab] = useState<'explorer' | 'graph'>('explorer');
   const [, setIsSearching] = useState(false);
   const { theme } = useTheme();
 
@@ -167,6 +169,41 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
             
             <ThemeToggle />
             
+            <div className={`flex rounded-lg border ${
+              theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+            }`}>
+              <button
+                onClick={() => setActiveTab('explorer')}
+                className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors ${
+                  activeTab === 'explorer'
+                    ? theme === 'dark'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-500 text-white'
+                    : theme === 'dark'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <FolderOpen className="w-4 h-4 inline mr-2" />
+                Explorer
+              </button>
+              <button
+                onClick={() => setActiveTab('graph')}
+                className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors ${
+                  activeTab === 'graph'
+                    ? theme === 'dark'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-500 text-white'
+                    : theme === 'dark'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <GitBranch className="w-4 h-4 inline mr-2" />
+                Dependencies
+              </button>
+            </div>
+            
             <button
               onClick={onReset}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
@@ -184,109 +221,123 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* File Tree */}
-        <div className={`w-80 border-r flex flex-col transition-colors duration-300 ${
-          theme === 'dark' 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        }`}>
-          <div className={`p-4 border-b ${
-            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-          }`}>
-            <h2 className={`text-lg font-semibold ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
+        {activeTab === 'explorer' ? (
+          <>
+            {/* File Tree */}
+            <div className={`w-80 border-r flex flex-col transition-colors duration-300 ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
             }`}>
-              Project Files
-            </h2>
-            <p className={`text-sm ${
-              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              Navigate through your codebase
-            </p>
-          </div>
-          <FileTree
-            files={projectData.files}
-            selectedFile={selectedFile?.path}
-            onFileSelect={handleFileSelect}
-          />
-        </div>
-
-        {/* Code Viewer */}
-        <div className={`flex-1 flex flex-col transition-colors duration-300 ${
-          theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-        }`}>
-          <CodeViewer
-            selectedFile={selectedFile}
-            fileContent={fileContent}
-          />
-        </div>
-
-        {/* Function List & Search Results */}
-        <div className={`w-80 border-l flex flex-col transition-colors duration-300 ${
-          theme === 'dark' 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        }`}>
-          {searchResults.length > 0 ? (
-            <div className="h-full flex flex-col">
               <div className={`p-4 border-b ${
                 theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <h2 className={`text-lg font-semibold ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
-                  Search Results
+                  Project Files
                 </h2>
                 <p className={`text-sm ${
                   theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                 }`}>
-                  {searchResults.length} results for "{searchTerm}"
+                  Navigate through your codebase
                 </p>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-2 space-y-1">
-                  {searchResults.map((result, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg cursor-pointer transition-all duration-150 ${
-                        theme === 'dark' 
-                          ? 'hover:bg-gray-700 border border-gray-700' 
-                          : 'hover:bg-gray-50 border border-gray-200'
-                      }`}
-                      onClick={() => {
-                        const file = projectData.files.find(f => f.path === result.file);
-                        if (file) handleFileSelect(file);
-                      }}
-                    >
-                      <div className={`font-medium text-sm ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {result.file.split('/').pop()}
-                      </div>
-                      <div className={`text-xs mb-1 ${
-                        theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        Line {result.line} • {result.symbolKind}
-                      </div>
-                      <div className={`text-xs p-2 rounded ${
-                        theme === 'dark' 
-                          ? 'text-gray-300 bg-gray-700' 
-                          : 'text-gray-600 bg-gray-50'
-                      }`}>
-                        {result.context}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <FileTree
+                files={projectData.files}
+                selectedFile={selectedFile?.path}
+                onFileSelect={handleFileSelect}
+              />
             </div>
-          ) : (
-            <FunctionList
-              symbols={currentSymbols}
-              onSymbolClick={handleSymbolClick}
+
+            {/* Code Viewer */}
+            <div className={`flex-1 flex flex-col transition-colors duration-300 ${
+              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <CodeViewer
+                selectedFile={selectedFile}
+                fileContent={fileContent}
+              />
+            </div>
+
+            {/* Function List & Search Results */}
+            <div className={`w-80 border-l flex flex-col transition-colors duration-300 ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              {searchResults.length > 0 ? (
+                <div className="h-full flex flex-col">
+                  <div className={`p-4 border-b ${
+                    theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <h2 className={`text-lg font-semibold ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      Search Results
+                    </h2>
+                    <p className={`text-sm ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {searchResults.length} results for "{searchTerm}"
+                    </p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="p-2 space-y-1">
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg cursor-pointer transition-all duration-150 ${
+                            theme === 'dark' 
+                              ? 'hover:bg-gray-700 border border-gray-700' 
+                              : 'hover:bg-gray-50 border border-gray-200'
+                          }`}
+                          onClick={() => {
+                            const file = projectData.files.find(f => f.path === result.file);
+                            if (file) handleFileSelect(file);
+                          }}
+                        >
+                          <div className={`font-medium text-sm ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {result.file.split('/').pop()}
+                          </div>
+                          <div className={`text-xs mb-1 ${
+                            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
+                            Line {result.line} • {result.symbolKind}
+                          </div>
+                          <div className={`text-xs p-2 rounded ${
+                            theme === 'dark' 
+                              ? 'text-gray-300 bg-gray-700' 
+                              : 'text-gray-600 bg-gray-50'
+                          }`}>
+                            {result.context}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <FunctionList
+                  symbols={currentSymbols}
+                  onSymbolClick={handleSymbolClick}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          /* Dependency Graph View */
+          <div className="flex-1">
+            <RippleGraph 
+              files={projectData.parsedFiles.map(pf => ({
+                filename: pf.path,
+                content: pf.content
+              }))}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

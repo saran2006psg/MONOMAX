@@ -10,11 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "@reactflow/background": "^11.3.14",
+    "@reactflow/controls": "^11.2.14",
+    "@reactflow/core": "^11.11.4",
+    "@reactflow/minimap": "^11.7.14",
+    "@types/dagre": "^0.7.53",
+    "@types/graphlib": "^2.1.12",
+    "axios": "^1.6.7",
+    "dagre": "^0.8.5",
+    "graphlib": "^2.1.8",
+    "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "lucide-react": "^0.344.0",
-    "@monaco-editor/react": "^4.6.0",
-    "axios": "^1.6.7"
+    "web-tree-sitter": "^0.25.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
