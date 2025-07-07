@@ -8,11 +8,19 @@ export async function initializeParser() {
   if (isInitialized) return parser;
   
   try {
-    await Parser.init();
+    await Parser.init({
+      locateFile(scriptName, scriptDirectory) {
+        // Use CDN for Tree-sitter files
+        if (scriptName === 'tree-sitter.wasm') {
+          return 'https://unpkg.com/web-tree-sitter@0.25.6/tree-sitter.wasm';
+        }
+        return scriptDirectory + scriptName;
+      }
+    });
     parser = new Parser();
     
     // Load JavaScript language grammar
-    const JavaScript = await Parser.Language.load('/tree-sitter-javascript.wasm');
+    const JavaScript = await Parser.Language.load('https://unpkg.com/tree-sitter-javascript@0.25.6/tree-sitter-javascript.wasm');
     parser.setLanguage(JavaScript);
     
     isInitialized = true;
@@ -178,12 +186,25 @@ export async function parseFile(filename, content) {
 
 // Parse multiple files
 export async function parseFiles(files) {
+  if (!files || files.length === 0) {
+    return [];
+  }
+  
   const results = [];
   
   for (const file of files) {
-    const result = await parseFile(file.filename, file.content);
-    results.push(result);
+    // Only parse JavaScript/TypeScript files
+    if (isJavaScriptFile(file.filename)) {
+      const result = await parseFile(file.filename, file.content);
+      results.push(result);
+    }
   }
   
   return results;
+}
+
+// Check if file is a JavaScript/TypeScript file
+function isJavaScriptFile(filename) {
+  const extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+  return extensions.some(ext => filename.toLowerCase().endsWith(ext));
 }

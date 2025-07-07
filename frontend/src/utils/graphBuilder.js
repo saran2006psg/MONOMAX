@@ -1,4 +1,4 @@
-import { Graph } from 'graphlib';
+import { Graph } from 'graphlib/lib/graph.js';
 
 // Create a dependency graph from parsed files
 export function buildDependencyGraph(parsedFiles) {

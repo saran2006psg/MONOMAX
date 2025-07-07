@@ -7,7 +7,7 @@ import {
   useNodesState,
   useEdgesState,
   Panel
-} from '@reactflow/core';
+} from 'reactflow';
 import dagre from 'dagre';
 import { buildDependencyGraph, graphToReactFlow, findDownstreamNodes, findUpstreamNodes } from '../utils/graphBuilder';
 import { parseFiles } from '../utils/parser';
@@ -121,13 +121,32 @@ export default function RippleGraph({ files }) {
       setIsLoading(true);
       try {
         console.log('Parsing files...', files.length);
-        const parsedFiles = await parseFiles(files);
+        // Filter for JavaScript/TypeScript files only
+        const jsFiles = files.filter(file => {
+          const extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+          return extensions.some(ext => file.filename.toLowerCase().endsWith(ext));
+        });
+        
+        if (jsFiles.length === 0) {
+          console.log('No JavaScript/TypeScript files found');
+          setIsLoading(false);
+          return;
+        }
+        
+        const parsedFiles = await parseFiles(jsFiles);
         console.log('Parsed files:', parsedFiles);
         
         const dependencyGraph = buildDependencyGraph(parsedFiles);
         console.log('Built graph with', dependencyGraph.nodeCount(), 'nodes');
         
         const { nodes: flowNodes, edges: flowEdges } = graphToReactFlow(dependencyGraph);
+        
+        if (flowNodes.length === 0) {
+          console.log('No nodes generated from graph');
+          setIsLoading(false);
+          return;
+        }
+        
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           flowNodes, 
           flowEdges, 

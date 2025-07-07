@@ -13,6 +13,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    exclude: ['lucide-react', 'web-tree-sitter'],
+  },
+  define: {
+    global: 'globalThis',
   },
 });

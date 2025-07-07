@@ -97,6 +97,9 @@
   @apply border-l-2 border-blue-500 dark:border-blue-400;
 }
 
+/* Import React Flow styles */
+@import 'reactflow/dist/style.css';
+
 /* React Flow styles */
 .react-flow__node {
   @apply transition-all duration-200;
