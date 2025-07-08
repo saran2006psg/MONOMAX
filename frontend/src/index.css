@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in-from-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
 @layer base {
   * {
     @apply transition-colors duration-200;
@@ -56,6 +84,21 @@
     @apply opacity-100 translate-y-0;
   }
   
+  /* Enhanced button animations */
+  .btn-animated {
+    @apply transform transition-all duration-200 hover:scale-105 active:scale-95;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent;
+  }
+  
+  /* Glass morphism effect */
+  .glass-morphism {
+    @apply backdrop-blur-md bg-white/10 dark:bg-gray-800/10 border border-white/20 dark:border-gray-700/20;
+  }
+  
   /* Better focus states */
   .focus-ring {
     @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900;
@@ -104,7 +147,58 @@
 
 /* Improved button hover states */
 button:hover {
-  @apply transform scale-105 transition-transform duration-200;
+  @apply transform transition-all duration-200;
+}
+
+/* Enhanced ReactFlow styles for dark mode */
+.react-flow.dark {
+  background: #111827;
+}
+
+.react-flow.dark .react-flow__node {
+  color: #f3f4f6;
+}
+
+.react-flow.dark .react-flow__edge {
+  stroke: #6b7280;
+}
+
+.react-flow.dark .react-flow__controls {
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.react-flow.dark .react-flow__controls button {
+  background: rgba(55, 65, 81, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  color: #f3f4f6;
+}
+
+.react-flow.dark .react-flow__controls button:hover {
+  background: rgba(75, 85, 99, 0.8);
+}
+
+.react-flow.dark .react-flow__minimap {
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* Smooth transitions for all interactive elements */
+.react-flow__node,
+.react-flow__edge {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced edge animations */
+.react-flow__edge.animated {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  to {
+    stroke-dashoffset: -10;
+  }
 }
 
 /* Loading skeleton */
