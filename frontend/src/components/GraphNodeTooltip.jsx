@@ -10,18 +10,17 @@ export default function GraphNodeTooltip({ node, position }) {
   
   return (
     <div
-      className={`fixed z-50 p-3 rounded-lg shadow-xl border pointer-events-none transition-all duration-200 ${
+      className={`fixed z-50 p-4 rounded-lg shadow-xl border pointer-events-none transition-all duration-200 max-w-xs ${
         theme === 'dark' 
           ? 'bg-gray-800 border-gray-600 text-white' 
           : 'bg-white border-gray-200 text-gray-900'
       }`}
       style={{
-        left: position.x + 10,
-        top: position.y - 10,
-        maxWidth: '300px'
+        left: Math.min(position.x + 15, window.innerWidth - 300),
+        top: Math.max(position.y - 10, 10),
       }}
     >
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <span className="text-lg">
             {data.type === 'file' ? '📁' : '⚡'}
@@ -36,23 +35,52 @@ export default function GraphNodeTooltip({ node, position }) {
         }`}>
           {data.type === 'file' ? (
             <>
-              <div><strong>File:</strong> {data.filename}</div>
-              <div><strong>Functions:</strong> {data.functions}</div>
-              <div><strong>Imports:</strong> {data.imports}</div>
+              <div className="flex justify-between">
+                <span><strong>File:</strong></span>
+                <span className="truncate ml-2" title={data.filename}>
+                  {data.filename.split('/').pop()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>Functions:</strong></span>
+                <span>{data.functions}</span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>Imports:</strong></span>
+                <span>{data.imports}</span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>Size:</strong></span>
+                <span>{data.size || 0} items</span>
+              </div>
             </>
           ) : (
             <>
-              <div><strong>Function:</strong> {data.functionName}</div>
-              <div><strong>File:</strong> {data.filename}</div>
-              <div><strong>Line:</strong> {data.line}</div>
+              <div className="flex justify-between">
+                <span><strong>Function:</strong></span>
+                <span className="truncate ml-2" title={data.functionName}>
+                  {data.functionName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>File:</strong></span>
+                <span className="truncate ml-2" title={data.filename}>
+                  {data.filename.split('/').pop()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>Line:</strong></span>
+                <span>{data.line}</span>
+              </div>
             </>
           )}
         </div>
         
-        <div className={`text-xs pt-2 border-t ${
+        <div className={`text-xs pt-2 border-t flex items-center space-x-1 ${
           theme === 'dark' ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
         }`}>
-          Click to see ripple effect
+          <span>💡</span>
+          <span>Click to see ripple effect</span>
         </div>
       </div>
     </div>

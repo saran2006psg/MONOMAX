@@ -3,35 +3,117 @@ import Parser from 'web-tree-sitter';
 let parser = null;
 let isInitialized = false;
 
-// Initialize Tree-sitter parser
+// Initialize Tree-sitter parser with better error handling
 export async function initializeParser() {
-  if (isInitialized) return parser;
+  if (isInitialized && parser) return parser;
   
   try {
+    console.log('Initializing Tree-sitter parser...');
+    
     await Parser.init({
       locateFile(scriptName, scriptDirectory) {
-        // Use CDN for Tree-sitter files
+        // Use CDN for Tree-sitter files with fallback
         if (scriptName === 'tree-sitter.wasm') {
-          return 'https://unpkg.com/web-tree-sitter@0.25.6/tree-sitter.wasm';
+          return 'https://cdn.jsdelivr.net/npm/web-tree-sitter@0.20.8/tree-sitter.wasm';
         }
         return scriptDirectory + scriptName;
       }
     });
+    
     parser = new Parser();
     
-    // Load JavaScript language grammar
-    const JavaScript = await Parser.Language.load('https://unpkg.com/tree-sitter-javascript@0.25.6/tree-sitter-javascript.wasm');
-    parser.setLanguage(JavaScript);
+    // Load JavaScript language grammar with fallback
+    try {
+      const JavaScript = await Parser.Language.load('https://cdn.jsdelivr.net/npm/tree-sitter-javascript@0.20.1/tree-sitter-javascript.wasm');
+      parser.setLanguage(JavaScript);
+      console.log('JavaScript grammar loaded successfully');
+    } catch (error) {
+      console.warn('Failed to load JavaScript grammar, using fallback parsing');
+      // We'll use regex-based parsing as fallback
+      parser = null;
+    }
     
     isInitialized = true;
     return parser;
   } catch (error) {
     console.error('Failed to initialize Tree-sitter:', error);
-    throw error;
+    // Use fallback parsing
+    parser = null;
+    isInitialized = true;
+    return null;
   }
 }
 
-// Extract imports from a file
+// Fallback regex-based parsing for when Tree-sitter fails
+function parseWithRegex(content, filename) {
+  const imports = [];
+  const functions = [];
+  const functionCalls = [];
+  
+  const lines = content.split('\n');
+  
+  // Extract imports
+  const importRegex = /^import\s+.*?from\s+['"]([^'"]+)['"];?/gm;
+  const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  
+  let match;
+  while ((match = importRegex.exec(content)) !== null) {
+    imports.push({
+      type: 'import',
+      source: match[1],
+      line: content.substring(0, match.index).split('\n').length
+    });
+  }
+  
+  while ((match = requireRegex.exec(content)) !== null) {
+    imports.push({
+      type: 'require',
+      source: match[1],
+      line: content.substring(0, match.index).split('\n').length
+    });
+  }
+  
+  // Extract functions
+  const functionRegex = /(?:function\s+(\w+)|const\s+(\w+)\s*=\s*(?:async\s+)?\(|(\w+)\s*:\s*(?:async\s+)?function|(\w+)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>)/g;
+  
+  while ((match = functionRegex.exec(content)) !== null) {
+    const name = match[1] || match[2] || match[3] || match[4];
+    if (name) {
+      const line = content.substring(0, match.index).split('\n').length;
+      functions.push({
+        name,
+        type: 'function',
+        line,
+        startPosition: { row: line - 1, column: match.index }
+      });
+    }
+  }
+  
+  // Extract function calls
+  const callRegex = /(\w+)\s*\(/g;
+  while ((match = callRegex.exec(content)) !== null) {
+    const name = match[1];
+    // Skip common keywords and built-ins
+    if (!['if', 'for', 'while', 'switch', 'catch', 'console', 'return'].includes(name)) {
+      const line = content.substring(0, match.index).split('\n').length;
+      functionCalls.push({
+        name,
+        line,
+        startPosition: { row: line - 1, column: match.index }
+      });
+    }
+  }
+  
+  return {
+    filename,
+    imports,
+    functions,
+    functionCalls,
+    tree: null
+  };
+}
+
+// Extract imports from Tree-sitter tree
 export function extractImports(tree) {
   const imports = [];
   
@@ -39,10 +121,11 @@ export function extractImports(tree) {
     if (node.type === 'import_statement') {
       const sourceNode = node.namedChild(node.namedChildCount - 1);
       if (sourceNode && sourceNode.type === 'string') {
-        const importPath = sourceNode.text.slice(1, -1); // Remove quotes
+        const importPath = sourceNode.text.slice(1, -1);
         imports.push({
           type: 'import',
           source: importPath,
+          line: node.startPosition.row + 1,
           startPosition: node.startPosition,
           endPosition: node.endPosition
         });
@@ -54,10 +137,11 @@ export function extractImports(tree) {
         if (argumentNode && argumentNode.type === 'arguments') {
           const pathNode = argumentNode.namedChild(0);
           if (pathNode && pathNode.type === 'string') {
-            const requirePath = pathNode.text.slice(1, -1); // Remove quotes
+            const requirePath = pathNode.text.slice(1, -1);
             imports.push({
               type: 'require',
               source: requirePath,
+              line: node.startPosition.row + 1,
               startPosition: node.startPosition,
               endPosition: node.endPosition
             });
@@ -82,7 +166,8 @@ export function extractFunctions(tree) {
   function traverse(node) {
     if (node.type === 'function_declaration' || 
         node.type === 'function_expression' || 
-        node.type === 'arrow_function') {
+        node.type === 'arrow_function' ||
+        node.type === 'method_definition') {
       
       let name = 'anonymous';
       
@@ -91,19 +176,29 @@ export function extractFunctions(tree) {
         if (nameNode && nameNode.type === 'identifier') {
           name = nameNode.text;
         }
+      } else if (node.type === 'method_definition') {
+        const nameNode = node.namedChild(0);
+        if (nameNode) {
+          name = nameNode.text;
+        }
       } else if (node.parent && node.parent.type === 'variable_declarator') {
         const nameNode = node.parent.namedChild(0);
         if (nameNode && nameNode.type === 'identifier') {
           name = nameNode.text;
+        }
+      } else if (node.parent && node.parent.type === 'assignment_expression') {
+        const leftNode = node.parent.namedChild(0);
+        if (leftNode && leftNode.type === 'identifier') {
+          name = leftNode.text;
         }
       }
       
       functions.push({
         name,
         type: node.type,
+        line: node.startPosition.row + 1,
         startPosition: node.startPosition,
-        endPosition: node.endPosition,
-        line: node.startPosition.row + 1
+        endPosition: node.endPosition
       });
     }
     
@@ -129,15 +224,18 @@ export function extractFunctionCalls(tree) {
         if (functionNode.type === 'identifier') {
           functionName = functionNode.text;
         } else if (functionNode.type === 'member_expression') {
-          functionName = functionNode.text;
+          const propertyNode = functionNode.namedChild(1);
+          if (propertyNode) {
+            functionName = propertyNode.text;
+          }
         }
         
-        if (functionName && functionName !== 'require') {
+        if (functionName && functionName !== 'require' && functionName !== 'console') {
           calls.push({
             name: functionName,
+            line: node.startPosition.row + 1,
             startPosition: node.startPosition,
-            endPosition: node.endPosition,
-            line: node.startPosition.row + 1
+            endPosition: node.endPosition
           });
         }
       }
@@ -152,35 +250,36 @@ export function extractFunctionCalls(tree) {
   return calls;
 }
 
-// Main parsing function
+// Main parsing function with fallback
 export async function parseFile(filename, content) {
-  if (!parser) {
-    await initializeParser();
-  }
-  
   try {
-    const tree = parser.parse(content);
+    if (!parser) {
+      await initializeParser();
+    }
     
-    const imports = extractImports(tree);
-    const functions = extractFunctions(tree);
-    const functionCalls = extractFunctionCalls(tree);
-    
-    return {
-      filename,
-      imports,
-      functions,
-      functionCalls,
-      tree
-    };
+    if (parser) {
+      // Use Tree-sitter parsing
+      const tree = parser.parse(content);
+      const imports = extractImports(tree);
+      const functions = extractFunctions(tree);
+      const functionCalls = extractFunctionCalls(tree);
+      
+      return {
+        filename,
+        imports,
+        functions,
+        functionCalls,
+        tree
+      };
+    } else {
+      // Use regex fallback
+      console.log(`Using regex fallback for ${filename}`);
+      return parseWithRegex(content, filename);
+    }
   } catch (error) {
     console.error(`Error parsing ${filename}:`, error);
-    return {
-      filename,
-      imports: [],
-      functions: [],
-      functionCalls: [],
-      tree: null
-    };
+    // Fallback to regex parsing
+    return parseWithRegex(content, filename);
   }
 }
 
@@ -190,16 +289,22 @@ export async function parseFiles(files) {
     return [];
   }
   
+  console.log(`Parsing ${files.length} files...`);
   const results = [];
   
   for (const file of files) {
-    // Only parse JavaScript/TypeScript files
     if (isJavaScriptFile(file.filename)) {
-      const result = await parseFile(file.filename, file.content);
-      results.push(result);
+      try {
+        const result = await parseFile(file.filename, file.content);
+        results.push(result);
+        console.log(`Parsed ${file.filename}: ${result.functions.length} functions, ${result.imports.length} imports`);
+      } catch (error) {
+        console.error(`Failed to parse ${file.filename}:`, error);
+      }
     }
   }
   
+  console.log(`Successfully parsed ${results.length} files`);
   return results;
 }
 

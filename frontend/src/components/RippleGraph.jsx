@@ -10,34 +10,35 @@ import {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { buildDependencyGraph, graphToReactFlow, findDownstreamNodes, findUpstreamNodes } from '../utils/graphBuilder';
+import { buildDependencyGraph, graphToReactFlow, findDownstreamNodes, findUpstreamNodes, getGraphStats } from '../utils/graphBuilder';
 import { parseFiles } from '../utils/parser';
 import GraphNodeTooltip from './GraphNodeTooltip';
 import { useTheme } from '../hooks/useTheme';
 
-// Custom node components
+// Custom node components with improved styling
 const FileNode = ({ data, selected }) => {
   const { theme } = useTheme();
   
   return (
-    <div className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 min-w-[120px] ${
+    <div className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 min-w-[140px] max-w-[200px] ${
       selected 
         ? theme === 'dark' 
-          ? 'bg-blue-900 border-blue-400 shadow-lg shadow-blue-400/50' 
-          : 'bg-blue-100 border-blue-500 shadow-lg shadow-blue-500/30'
+          ? 'bg-blue-900 border-blue-400 shadow-lg shadow-blue-400/50 scale-105' 
+          : 'bg-blue-100 border-blue-500 shadow-lg shadow-blue-500/30 scale-105'
         : theme === 'dark'
-          ? 'bg-gray-800 border-gray-600 hover:border-blue-400'
-          : 'bg-white border-gray-300 hover:border-blue-400'
+          ? 'bg-gray-800 border-gray-600 hover:border-blue-400 hover:shadow-md'
+          : 'bg-white border-gray-300 hover:border-blue-400 hover:shadow-md'
     }`}>
-      <div className={`font-bold text-sm ${
+      <div className={`font-bold text-sm mb-1 truncate ${
         theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-      }`}>
+      }`} title={data.filename}>
         📁 {data.label}
       </div>
-      <div className={`text-xs mt-1 ${
+      <div className={`text-xs space-y-1 ${
         theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
       }`}>
-        {data.functions} functions • {data.imports} imports
+        <div>⚡ {data.functions} functions</div>
+        <div>📥 {data.imports} imports</div>
       </div>
     </div>
   );
@@ -47,21 +48,21 @@ const FunctionNode = ({ data, selected }) => {
   const { theme } = useTheme();
   
   return (
-    <div className={`px-3 py-2 rounded-lg border-2 transition-all duration-200 min-w-[100px] ${
+    <div className={`px-3 py-2 rounded-lg border-2 transition-all duration-200 min-w-[100px] max-w-[150px] ${
       selected 
         ? theme === 'dark' 
-          ? 'bg-purple-900 border-purple-400 shadow-lg shadow-purple-400/50' 
-          : 'bg-purple-100 border-purple-500 shadow-lg shadow-purple-500/30'
+          ? 'bg-purple-900 border-purple-400 shadow-lg shadow-purple-400/50 scale-105' 
+          : 'bg-purple-100 border-purple-500 shadow-lg shadow-purple-500/30 scale-105'
         : theme === 'dark'
-          ? 'bg-gray-800 border-gray-600 hover:border-purple-400'
-          : 'bg-white border-gray-300 hover:border-purple-400'
+          ? 'bg-gray-800 border-gray-600 hover:border-purple-400 hover:shadow-md'
+          : 'bg-white border-gray-300 hover:border-purple-400 hover:shadow-md'
     }`}>
-      <div className={`font-bold text-sm ${
+      <div className={`font-bold text-sm mb-1 truncate ${
         theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
-      }`}>
+      }`} title={data.functionName}>
         ⚡ {data.label}
       </div>
-      <div className={`text-xs mt-1 ${
+      <div className={`text-xs ${
         theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
       }`}>
         Line {data.line}
@@ -75,14 +76,26 @@ const nodeTypes = {
   functionNode: FunctionNode,
 };
 
-// Layout algorithm using Dagre
+// Layout algorithm using Dagre with improved spacing
 const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 });
+  
+  const nodeWidth = 160;
+  const nodeHeight = 80;
+  const rankSep = direction === 'TB' ? 150 : 200;
+  const nodeSep = direction === 'TB' ? 100 : 150;
+  
+  dagreGraph.setGraph({ 
+    rankdir: direction, 
+    ranksep: rankSep, 
+    nodesep: nodeSep,
+    marginx: 50,
+    marginy: 50
+  });
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 150, height: 80 });
+    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
 
   edges.forEach((edge) => {
@@ -94,8 +107,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     node.position = {
-      x: nodeWithPosition.x - 75,
-      y: nodeWithPosition.y - 40,
+      x: nodeWithPosition.x - nodeWidth / 2,
+      y: nodeWithPosition.y - nodeHeight / 2,
     };
   });
 
@@ -113,17 +126,21 @@ export default function RippleGraph({ files }) {
   const [tooltipData, setTooltipData] = useState(null);
   const [layoutDirection, setLayoutDirection] = useState('TB');
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
   const { theme } = useTheme();
 
-  // Parse files and build graph
+  // Parse files and build graph with progress tracking
   useEffect(() => {
     if (!files || files.length === 0) return;
 
     const buildGraph = async () => {
       setIsLoading(true);
       setError(null);
+      setProgress(0);
+      
       try {
-        console.log('Parsing files...', files.length);
+        console.log('Starting graph build process...');
+        
         // Filter for JavaScript/TypeScript files only
         const jsFiles = files.filter(file => {
           const extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
@@ -131,41 +148,60 @@ export default function RippleGraph({ files }) {
         });
         
         if (jsFiles.length === 0) {
-          console.log('No JavaScript/TypeScript files found');
           setError('No JavaScript/TypeScript files found in the uploaded project.');
           setIsLoading(false);
           return;
         }
         
+        setProgress(20);
+        console.log(`Found ${jsFiles.length} JS/TS files to parse`);
+        
+        // Parse files
         const parsedFiles = await parseFiles(jsFiles);
-        console.log('Parsed files:', parsedFiles);
+        setProgress(50);
         
-        const dependencyGraph = buildDependencyGraph(parsedFiles);
-        console.log('Built graph with', dependencyGraph.nodeCount(), 'nodes');
-        
-        const { nodes: flowNodes, edges: flowEdges } = graphToReactFlow(dependencyGraph);
-        
-        if (flowNodes.length === 0) {
-          console.log('No nodes generated from graph');
-          setError('No dependencies found in the analyzed files.');
+        if (parsedFiles.length === 0) {
+          setError('Failed to parse any files. Please check if the files contain valid JavaScript/TypeScript code.');
           setIsLoading(false);
           return;
         }
         
+        console.log(`Successfully parsed ${parsedFiles.length} files`);
+        
+        // Build dependency graph
+        const dependencyGraph = buildDependencyGraph(parsedFiles);
+        setProgress(70);
+        
+        if (dependencyGraph.nodeCount() === 0) {
+          setError('No dependencies or functions found in the analyzed files.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Convert to React Flow format
+        const { nodes: flowNodes, edges: flowEdges } = graphToReactFlow(dependencyGraph);
+        setProgress(85);
+        
+        // Apply layout
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           flowNodes, 
           flowEdges, 
           layoutDirection
         );
         
+        setProgress(100);
+        
         setGraph(dependencyGraph);
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
+        
+        console.log(`Graph built successfully: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges`);
       } catch (error) {
         console.error('Error building graph:', error);
         setError(`Failed to build dependency graph: ${error.message}`);
       } finally {
         setIsLoading(false);
+        setProgress(0);
       }
     };
 
@@ -176,6 +212,7 @@ export default function RippleGraph({ files }) {
   const onNodeClick = useCallback((event, node) => {
     if (!graph) return;
 
+    console.log('Node clicked:', node.id);
     setSelectedNode(node.id);
     
     // Find downstream and upstream nodes
@@ -185,7 +222,9 @@ export default function RippleGraph({ files }) {
     const highlighted = new Set([node.id, ...downstream, ...upstream]);
     setHighlightedNodes(highlighted);
 
-    // Update node styles
+    console.log(`Ripple effect: ${highlighted.size} nodes highlighted`);
+
+    // Update node styles with smooth transitions
     setNodes((nds) =>
       nds.map((n) => ({
         ...n,
@@ -193,6 +232,7 @@ export default function RippleGraph({ files }) {
           ...n.style,
           opacity: highlighted.has(n.id) ? 1 : 0.3,
           transform: highlighted.has(n.id) ? 'scale(1.05)' : 'scale(1)',
+          transition: 'all 0.3s ease',
         },
       }))
     );
@@ -205,6 +245,7 @@ export default function RippleGraph({ files }) {
           ...e.style,
           opacity: highlighted.has(e.source) && highlighted.has(e.target) ? 1 : 0.2,
           strokeWidth: highlighted.has(e.source) && highlighted.has(e.target) ? 3 : 1,
+          transition: 'all 0.3s ease',
         },
       }))
     );
@@ -236,6 +277,7 @@ export default function RippleGraph({ files }) {
           ...n.style,
           opacity: 1,
           transform: 'scale(1)',
+          transition: 'all 0.3s ease',
         },
       }))
     );
@@ -246,7 +288,8 @@ export default function RippleGraph({ files }) {
         style: {
           ...e.style,
           opacity: 1,
-          strokeWidth: 2,
+          strokeWidth: e.data?.type === 'imports' ? 3 : e.data?.type === 'calls' ? 2 : 1,
+          transition: 'all 0.3s ease',
         },
       }))
     );
@@ -264,16 +307,11 @@ export default function RippleGraph({ files }) {
     setEdges(layoutedEdges);
   }, [nodes, edges, setNodes, setEdges]);
 
+  // Calculate statistics
   const stats = useMemo(() => {
     if (!graph) return null;
-    
-    const fileNodes = nodes.filter(n => n.data.type === 'file').length;
-    const functionNodes = nodes.filter(n => n.data.type === 'function').length;
-    const importEdges = edges.filter(e => e.data.type === 'imports').length;
-    const callEdges = edges.filter(e => e.data.type === 'calls').length;
-    
-    return { fileNodes, functionNodes, importEdges, callEdges };
-  }, [graph, nodes, edges]);
+    return getGraphStats(graph);
+  }, [graph]);
 
   if (isLoading) {
     return (
@@ -281,8 +319,17 @@ export default function RippleGraph({ files }) {
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
       }`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className={`text-lg font-medium ${
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={`text-xs font-bold ${
+                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+              }`}>
+                {progress}%
+              </span>
+            </div>
+          </div>
+          <p className={`text-lg font-medium mb-2 ${
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>
             Building dependency graph...
@@ -290,8 +337,16 @@ export default function RippleGraph({ files }) {
           <p className={`text-sm ${
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
           }`}>
-            Parsing {files?.length || 0} files
+            Analyzing {files?.length || 0} files
           </p>
+          <div className={`mt-4 w-64 h-2 rounded-full mx-auto ${
+            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+          }`}>
+            <div 
+              className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
       </div>
     );
@@ -302,7 +357,7 @@ export default function RippleGraph({ files }) {
       <div className={`h-full flex items-center justify-center ${
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
       }`}>
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <div className={`mb-4 ${
             theme === 'dark' ? 'text-red-400' : 'text-red-500'
           }`}>
@@ -319,6 +374,11 @@ export default function RippleGraph({ files }) {
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
           }`}>
             {error}
+          </p>
+          <p className={`text-xs mt-2 ${
+            theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+          }`}>
+            Try uploading a project with JavaScript or TypeScript files
           </p>
         </div>
       </div>
@@ -370,13 +430,17 @@ export default function RippleGraph({ files }) {
         fitView
         attributionPosition="bottom-left"
         className={theme === 'dark' ? 'dark' : ''}
+        minZoom={0.1}
+        maxZoom={2}
       >
         <Background 
           color={theme === 'dark' ? '#374151' : '#e5e7eb'} 
           gap={20} 
+          size={1}
         />
         <Controls 
           className={theme === 'dark' ? 'dark' : ''}
+          showInteractive={false}
         />
         <MiniMap 
           nodeColor={(node) => {
@@ -386,41 +450,59 @@ export default function RippleGraph({ files }) {
             return theme === 'dark' ? '#6b7280' : '#d1d5db';
           }}
           className={theme === 'dark' ? 'dark' : ''}
+          pannable
+          zoomable
         />
         
-        <Panel position="top-left" className="space-y-2">
-          <div className={`p-3 rounded-lg shadow-lg ${
-            theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+        <Panel position="top-left" className="space-y-3">
+          {/* Graph Statistics */}
+          <div className={`p-4 rounded-lg shadow-lg backdrop-blur-sm ${
+            theme === 'dark' ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-gray-200'
           }`}>
-            <h3 className={`font-bold text-sm mb-2 ${
+            <h3 className={`font-bold text-sm mb-3 flex items-center ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
+              <span className="mr-2">📊</span>
               Dependency Graph
             </h3>
             {stats && (
-              <div className={`text-xs space-y-1 ${
+              <div className={`text-xs space-y-2 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                <div>📁 {stats.fileNodes} files</div>
-                <div>⚡ {stats.functionNodes} functions</div>
-                <div>📥 {stats.importEdges} imports</div>
-                <div>🔗 {stats.callEdges} calls</div>
+                <div className="flex justify-between">
+                  <span>📁 Files:</span>
+                  <span className="font-mono">{stats.fileNodes}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>⚡ Functions:</span>
+                  <span className="font-mono">{stats.functionNodes}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>📥 Imports:</span>
+                  <span className="font-mono">{stats.importEdges}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>🔗 Calls:</span>
+                  <span className="font-mono">{stats.callEdges}</span>
+                </div>
               </div>
             )}
           </div>
           
-          <div className={`p-3 rounded-lg shadow-lg ${
-            theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+          {/* Layout Controls */}
+          <div className={`p-4 rounded-lg shadow-lg backdrop-blur-sm ${
+            theme === 'dark' ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-gray-200'
           }`}>
-            <h4 className={`font-bold text-sm mb-2 ${
+            <h4 className={`font-bold text-sm mb-3 flex items-center ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
+              <span className="mr-2">🎛️</span>
               Layout
             </h4>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <button
                 onClick={() => onLayout('TB')}
-                className={`w-full text-xs px-2 py-1 rounded transition-colors ${
+                className={`w-full text-xs px-3 py-2 rounded transition-colors ${
                   layoutDirection === 'TB'
                     ? theme === 'dark'
                       ? 'bg-blue-600 text-white'
@@ -430,11 +512,11 @@ export default function RippleGraph({ files }) {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Top to Bottom
+                ⬇️ Top to Bottom
               </button>
               <button
                 onClick={() => onLayout('LR')}
-                className={`w-full text-xs px-2 py-1 rounded transition-colors ${
+                className={`w-full text-xs px-3 py-2 rounded transition-colors ${
                   layoutDirection === 'LR'
                     ? theme === 'dark'
                       ? 'bg-blue-600 text-white'
@@ -444,28 +526,30 @@ export default function RippleGraph({ files }) {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Left to Right
+                ➡️ Left to Right
               </button>
             </div>
           </div>
           
+          {/* Ripple Effect Info */}
           {selectedNode && (
-            <div className={`p-3 rounded-lg shadow-lg ${
-              theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            <div className={`p-4 rounded-lg shadow-lg backdrop-blur-sm ${
+              theme === 'dark' ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-gray-200'
             }`}>
-              <h4 className={`font-bold text-sm mb-2 ${
+              <h4 className={`font-bold text-sm mb-2 flex items-center ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
+                <span className="mr-2">🌊</span>
                 Ripple Effect
               </h4>
-              <div className={`text-xs ${
+              <div className={`text-xs mb-3 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
                 Showing {highlightedNodes.size} connected nodes
               </div>
               <button
                 onClick={clearSelection}
-                className={`mt-2 w-full text-xs px-2 py-1 rounded transition-colors ${
+                className={`w-full text-xs px-3 py-2 rounded transition-colors ${
                   theme === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
