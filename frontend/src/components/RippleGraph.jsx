@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ReactFlow,
-  Controls,
-  Background,
-  MiniMap,
   useNodesState,
   useEdgesState,
   Panel
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@reactflow/core';
+import { Controls } from '@reactflow/controls';
+import { Background } from '@reactflow/background';
+import { MiniMap } from '@reactflow/minimap';
+import '@reactflow/core/dist/style.css';
 import dagre from 'dagre';
 import { buildDependencyGraph, graphToReactFlow, findDownstreamNodes, findUpstreamNodes, getGraphStats } from '../utils/graphBuilder';
 import { parseFiles } from '../utils/parser';
