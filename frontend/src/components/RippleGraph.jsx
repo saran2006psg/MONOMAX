@@ -15,59 +15,123 @@ import { parseFiles } from '../utils/parser';
 import GraphNodeTooltip from './GraphNodeTooltip';
 import { useTheme } from '../hooks/useTheme';
 
-// Enhanced custom node components with animations
+// Enhanced custom node components with advanced animations
 const FileNode = ({ data, selected }) => {
   const { theme } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
+  const [pulseAnimation, setPulseAnimation] = useState(false);
+  
+  useEffect(() => {
+    if (selected) {
+      setPulseAnimation(true);
+      const timer = setTimeout(() => setPulseAnimation(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [selected]);
   
   return (
     <div 
-      className={`relative px-4 py-3 rounded-xl border-2 transition-all duration-300 min-w-[140px] max-w-[200px] cursor-pointer group ${
+      className={`relative px-5 py-4 rounded-2xl border-2 transition-all duration-500 min-w-[160px] max-w-[220px] cursor-pointer group overflow-hidden ${
         selected 
           ? theme === 'dark' 
-            ? 'bg-gradient-to-br from-blue-900 to-blue-800 border-blue-400 shadow-2xl shadow-blue-400/50 scale-110 animate-pulse' 
-            : 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-500 shadow-2xl shadow-blue-500/30 scale-110'
+            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 border-blue-400 shadow-2xl shadow-blue-400/60 scale-110' 
+            : 'bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 border-blue-500 shadow-2xl shadow-blue-500/40 scale-110'
           : theme === 'dark'
-            ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-400/20 hover:scale-105'
-            : 'bg-gradient-to-br from-white to-gray-50 border-gray-300 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-105'
-      }`}
+            ? 'bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 border-gray-600 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-400/30 hover:scale-105'
+            : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border-gray-300 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105'
+      } ${pulseAnimation ? 'animate-pulse' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transform: selected ? 'scale(1.1) rotate(1deg)' : isHovered ? 'scale(1.05) rotate(0.5deg)' : 'scale(1)',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
-      {/* Animated background glow */}
-      <div className={`absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 ${
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className={`absolute w-2 h-2 rounded-full opacity-0 ${
+              theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'
+            } ${isHovered || selected ? 'animate-ping' : ''}`}
+            style={{
+              top: `${20 + i * 30}%`,
+              left: `${10 + i * 25}%`,
+              animationDelay: `${i * 0.2}s`,
+              animationDuration: '2s',
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Glowing border effect */}
+      <div className={`absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 ${
         isHovered || selected ? 'opacity-100' : ''
-      } ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10' 
-          : 'bg-gradient-to-r from-blue-500/5 to-purple-500/5'
-      }`} />
+      }`}>
+        <div className={`absolute inset-0 rounded-2xl ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20' 
+            : 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10'
+        } animate-pulse`} />
+      </div>
       
       {/* Content */}
       <div className="relative z-10">
-        <div className={`font-bold text-sm mb-2 truncate flex items-center ${
-          theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+        <div className={`font-bold text-base mb-3 truncate flex items-center ${
+          theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
         }`} title={data.filename}>
-          <span className="mr-2 text-lg animate-bounce">📁</span>
-          {data.label}
-        </div>
-        <div className={`text-xs space-y-1 ${
-          theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          <div className="flex items-center">
-            <span className="mr-1">⚡</span>
-            <span>{data.functions} functions</span>
+          <div className="relative mr-3">
+            <span className="text-2xl">📁</span>
+            {(isHovered || selected) && (
+              <div className="absolute -inset-1 bg-blue-500/20 rounded-full animate-ping" />
+            )}
           </div>
-          <div className="flex items-center">
-            <span className="mr-1">📥</span>
-            <span>{data.imports} imports</span>
+          <span className="truncate">{data.label}</span>
+        </div>
+        
+        <div className="space-y-2">
+          <div className={`flex items-center justify-between p-2 rounded-lg transition-all duration-300 ${
+            theme === 'dark' ? 'bg-gray-700/50 hover:bg-gray-700/70' : 'bg-gray-100/70 hover:bg-gray-200/70'
+          }`}>
+            <span className="flex items-center text-sm">
+              <span className="mr-2 text-lg animate-bounce" style={{ animationDelay: '0.1s' }}>⚡</span>
+              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Functions</span>
+            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+              theme === 'dark' ? 'bg-purple-900/40 text-purple-300' : 'bg-purple-100 text-purple-700'
+            }`}>
+              {data.functions}
+            </span>
+          </div>
+          
+          <div className={`flex items-center justify-between p-2 rounded-lg transition-all duration-300 ${
+            theme === 'dark' ? 'bg-gray-700/50 hover:bg-gray-700/70' : 'bg-gray-100/70 hover:bg-gray-200/70'
+          }`}>
+            <span className="flex items-center text-sm">
+              <span className="mr-2 text-lg animate-bounce" style={{ animationDelay: '0.2s' }}>📥</span>
+              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Imports</span>
+            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+              theme === 'dark' ? 'bg-orange-900/40 text-orange-300' : 'bg-orange-100 text-orange-700'
+            }`}>
+              {data.imports}
+            </span>
           </div>
         </div>
       </div>
       
       {/* Ripple effect on selection */}
       {selected && (
-        <div className="absolute inset-0 rounded-xl border-2 border-blue-400 animate-ping opacity-75" />
+        <>
+          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400 animate-ping opacity-75" />
+          <div className="absolute inset-0 rounded-2xl border-2 border-blue-300 animate-ping opacity-50" style={{ animationDelay: '0.3s' }} />
+        </>
+      )}
+      
+      {/* Hover glow effect */}
+      {isHovered && !selected && (
+        <div className="absolute inset-0 rounded-2xl border border-blue-400/50 shadow-lg shadow-blue-400/20 animate-pulse" />
       )}
     </div>
   );
@@ -76,48 +140,103 @@ const FileNode = ({ data, selected }) => {
 const FunctionNode = ({ data, selected }) => {
   const { theme } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
+  const [sparkleAnimation, setSparkleAnimation] = useState(false);
+  
+  useEffect(() => {
+    if (selected) {
+      setSparkleAnimation(true);
+      const timer = setTimeout(() => setSparkleAnimation(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [selected]);
   
   return (
     <div 
-      className={`relative px-3 py-2 rounded-lg border-2 transition-all duration-300 min-w-[100px] max-w-[150px] cursor-pointer group ${
+      className={`relative px-4 py-3 rounded-xl border-2 transition-all duration-500 min-w-[120px] max-w-[180px] cursor-pointer group overflow-hidden ${
         selected 
           ? theme === 'dark' 
-            ? 'bg-gradient-to-br from-purple-900 to-purple-800 border-purple-400 shadow-2xl shadow-purple-400/50 scale-110 animate-pulse' 
-            : 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-500 shadow-2xl shadow-purple-500/30 scale-110'
+            ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 border-purple-400 shadow-2xl shadow-purple-400/60 scale-110' 
+            : 'bg-gradient-to-br from-purple-100 via-purple-50 to-pink-100 border-purple-500 shadow-2xl shadow-purple-500/40 scale-110'
           : theme === 'dark'
-            ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-400/20 hover:scale-105'
-            : 'bg-gradient-to-br from-white to-gray-50 border-gray-300 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-500/20 hover:scale-105'
+            ? 'bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 border-gray-600 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-400/30 hover:scale-105'
+            : 'bg-gradient-to-br from-white via-gray-50 to-purple-50 border-gray-300 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-500/30 hover:scale-105'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transform: selected ? 'scale(1.1) rotate(-1deg)' : isHovered ? 'scale(1.05) rotate(-0.5deg)' : 'scale(1)',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
+      {/* Sparkle effects */}
+      <div className="absolute inset-0 overflow-hidden rounded-xl">
+        {sparkleAnimation && [...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className={`absolute w-1 h-1 rounded-full ${
+              theme === 'dark' ? 'bg-purple-300' : 'bg-purple-600'
+            } animate-ping`}
+            style={{
+              top: `${Math.random() * 80 + 10}%`,
+              left: `${Math.random() * 80 + 10}%`,
+              animationDelay: `${i * 0.1}s`,
+              animationDuration: '1s',
+            }}
+          />
+        ))}
+      </div>
+      
       {/* Animated background glow */}
-      <div className={`absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 ${
+      <div className={`absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 ${
         isHovered || selected ? 'opacity-100' : ''
-      } ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10' 
-          : 'bg-gradient-to-r from-purple-500/5 to-pink-500/5'
-      }`} />
+      }`}>
+        <div className={`absolute inset-0 rounded-xl ${
+          theme === 'dark' 
+            ? 'bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20' 
+            : 'bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-indigo-500/10'
+        } animate-pulse`} />
+      </div>
       
       {/* Content */}
       <div className="relative z-10">
-        <div className={`font-bold text-sm mb-1 truncate flex items-center ${
-          theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+        <div className={`font-bold text-sm mb-2 truncate flex items-center ${
+          theme === 'dark' ? 'text-purple-300' : 'text-purple-700'
         }`} title={data.functionName}>
-          <span className="mr-1 text-sm animate-spin">⚡</span>
-          {data.label}
+          <div className="relative mr-2">
+            <span className="text-lg">⚡</span>
+            {(isHovered || selected) && (
+              <div className="absolute -inset-1 bg-purple-500/30 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
+            )}
+          </div>
+          <span className="truncate">{data.label}</span>
         </div>
-        <div className={`text-xs ${
-          theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+        
+        <div className={`flex items-center justify-between p-2 rounded-lg transition-all duration-300 ${
+          theme === 'dark' ? 'bg-gray-700/50 hover:bg-gray-700/70' : 'bg-gray-100/70 hover:bg-gray-200/70'
         }`}>
-          Line {data.line}
+          <span className="flex items-center text-xs">
+            <span className="mr-1 text-sm">📍</span>
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Line</span>
+          </span>
+          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+            theme === 'dark' ? 'bg-green-900/40 text-green-300' : 'bg-green-100 text-green-700'
+          }`}>
+            {data.line}
+          </span>
         </div>
       </div>
       
       {/* Ripple effect on selection */}
       {selected && (
-        <div className="absolute inset-0 rounded-lg border-2 border-purple-400 animate-ping opacity-75" />
+        <>
+          <div className="absolute inset-0 rounded-xl border-2 border-purple-400 animate-ping opacity-75" />
+          <div className="absolute inset-0 rounded-xl border-2 border-purple-300 animate-ping opacity-50" style={{ animationDelay: '0.2s' }} />
+        </>
+      )}
+      
+      {/* Hover glow effect */}
+      {isHovered && !selected && (
+        <div className="absolute inset-0 rounded-xl border border-purple-400/50 shadow-lg shadow-purple-400/20 animate-pulse" />
       )}
     </div>
   );
@@ -128,22 +247,22 @@ const nodeTypes = {
   functionNode: FunctionNode,
 };
 
-// Enhanced layout algorithm with better spacing
+// Enhanced layout algorithm with better spacing and positioning
 const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   
-  const nodeWidth = 180;
-  const nodeHeight = 90;
-  const rankSep = direction === 'TB' ? 200 : 250;
-  const nodeSep = direction === 'TB' ? 120 : 180;
+  const nodeWidth = 200;
+  const nodeHeight = 120;
+  const rankSep = direction === 'TB' ? 250 : 300;
+  const nodeSep = direction === 'TB' ? 150 : 200;
   
   dagreGraph.setGraph({ 
     rankdir: direction, 
     ranksep: rankSep, 
     nodesep: nodeSep,
-    marginx: 80,
-    marginy: 80,
+    marginx: 100,
+    marginy: 100,
     acyclicer: 'greedy',
     ranker: 'tight-tree'
   });
@@ -182,6 +301,7 @@ export default function RippleGraph({ files }) {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [animationPhase, setAnimationPhase] = useState('idle');
+  const [showStats, setShowStats] = useState(true);
   const { theme } = useTheme();
 
   // Parse files and build graph with enhanced progress tracking
@@ -254,14 +374,14 @@ export default function RippleGraph({ files }) {
         
         setProgress(95);
         
-        // Animate nodes appearing
+        // Animate nodes appearing with staggered entrance
         const animatedNodes = layoutedNodes.map((node, index) => ({
           ...node,
           style: {
             ...node.style,
             opacity: 0,
-            transform: 'scale(0.8)',
-            transition: `all 0.5s ease ${index * 0.1}s`,
+            transform: 'scale(0.3) rotate(180deg)',
+            transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s`,
           },
         }));
         
@@ -270,7 +390,9 @@ export default function RippleGraph({ files }) {
           style: {
             ...edge.style,
             opacity: 0,
-            transition: `all 0.5s ease ${index * 0.05 + 0.3}s`,
+            strokeDasharray: '10,10',
+            strokeDashoffset: '20',
+            transition: `all 0.8s ease ${index * 0.05 + 0.5}s`,
           },
         }));
         
@@ -288,7 +410,7 @@ export default function RippleGraph({ files }) {
             style: {
               ...node.style,
               opacity: 1,
-              transform: 'scale(1)',
+              transform: 'scale(1) rotate(0deg)',
             },
           })));
           
@@ -297,9 +419,11 @@ export default function RippleGraph({ files }) {
             style: {
               ...edge.style,
               opacity: 1,
+              strokeDasharray: edge.data?.type === 'calls' ? '5,5' : 'none',
+              strokeDashoffset: '0',
             },
           })));
-        }, 200);
+        }, 300);
         
         console.log(`Enhanced graph built successfully: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges`);
       } catch (error) {
@@ -336,30 +460,32 @@ export default function RippleGraph({ files }) {
 
     console.log(`Ripple effect: ${highlighted.size} nodes highlighted`);
 
-    // Enhanced node animations
+    // Enhanced node animations with wave effect
     setNodes((nds) =>
-      nds.map((n) => ({
+      nds.map((n, index) => ({
         ...n,
         style: {
           ...n.style,
-          opacity: highlighted.has(n.id) ? 1 : 0.2,
-          transform: highlighted.has(n.id) ? 'scale(1.1)' : 'scale(0.95)',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          filter: highlighted.has(n.id) ? 'brightness(1.2)' : 'brightness(0.7)',
+          opacity: highlighted.has(n.id) ? 1 : 0.15,
+          transform: highlighted.has(n.id) ? 'scale(1.15) rotate(2deg)' : 'scale(0.9)',
+          transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s`,
+          filter: highlighted.has(n.id) ? 'brightness(1.3) saturate(1.2)' : 'brightness(0.6) saturate(0.8)',
+          zIndex: highlighted.has(n.id) ? 1000 : 1,
         },
       }))
     );
 
-    // Enhanced edge animations
+    // Enhanced edge animations with flowing effect
     setEdges((eds) =>
-      eds.map((e) => ({
+      eds.map((e, index) => ({
         ...e,
         style: {
           ...e.style,
-          opacity: highlighted.has(e.source) && highlighted.has(e.target) ? 1 : 0.1,
-          strokeWidth: highlighted.has(e.source) && highlighted.has(e.target) ? 4 : 1,
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          filter: highlighted.has(e.source) && highlighted.has(e.target) ? 'drop-shadow(0 0 8px currentColor)' : 'none',
+          opacity: highlighted.has(e.source) && highlighted.has(e.target) ? 1 : 0.05,
+          strokeWidth: highlighted.has(e.source) && highlighted.has(e.target) ? 5 : 1,
+          transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.03}s`,
+          filter: highlighted.has(e.source) && highlighted.has(e.target) ? 'drop-shadow(0 0 12px currentColor)' : 'none',
+          strokeDasharray: highlighted.has(e.source) && highlighted.has(e.target) ? '8,4' : e.style.strokeDasharray,
         },
         animated: highlighted.has(e.source) && highlighted.has(e.target),
       }))
@@ -386,27 +512,29 @@ export default function RippleGraph({ files }) {
     setHighlightedNodes(new Set());
     
     setNodes((nds) =>
-      nds.map((n) => ({
+      nds.map((n, index) => ({
         ...n,
         style: {
           ...n.style,
           opacity: 1,
-          transform: 'scale(1)',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          filter: 'brightness(1)',
+          transform: 'scale(1) rotate(0deg)',
+          transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.03}s`,
+          filter: 'brightness(1) saturate(1)',
+          zIndex: 1,
         },
       }))
     );
 
     setEdges((eds) =>
-      eds.map((e) => ({
+      eds.map((e, index) => ({
         ...e,
         style: {
           ...e.style,
           opacity: 1,
           strokeWidth: e.data?.type === 'imports' ? 3 : e.data?.type === 'calls' ? 2 : 1,
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.02}s`,
           filter: 'none',
+          strokeDasharray: e.data?.type === 'calls' ? '5,5' : e.data?.type === 'contains' ? '3,3' : 'none',
         },
         animated: e.data?.type === 'calls',
       }))
@@ -422,20 +550,20 @@ export default function RippleGraph({ files }) {
       direction
     );
     
-    // Animate layout change
-    setNodes(layoutedNodes.map(node => ({
+    // Animate layout change with spring effect
+    setNodes(layoutedNodes.map((node, index) => ({
       ...node,
       style: {
         ...node.style,
-        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s`,
       },
     })));
     
-    setEdges(layoutedEdges.map(edge => ({
+    setEdges(layoutedEdges.map((edge, index) => ({
       ...edge,
       style: {
         ...edge.style,
-        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.03}s`,
       },
     })));
   }, [nodes, edges, setNodes, setEdges]);
@@ -446,27 +574,36 @@ export default function RippleGraph({ files }) {
     return getGraphStats(graph);
   }, [graph]);
 
-  // Enhanced loading screen
+  // Enhanced loading screen with particle effects
   if (isLoading) {
     return (
       <div className={`h-full flex items-center justify-center relative overflow-hidden ${
-        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-gray-50 via-white to-blue-50'
       }`}>
-        {/* Animated background */}
+        {/* Animated background particles */}
         <div className="absolute inset-0">
-          <div className={`absolute top-1/4 left-1/4 w-32 h-32 rounded-full opacity-20 animate-pulse ${
-            theme === 'dark' ? 'bg-blue-500' : 'bg-blue-400'
-          }`} />
-          <div className={`absolute bottom-1/4 right-1/4 w-24 h-24 rounded-full opacity-20 animate-pulse delay-300 ${
-            theme === 'dark' ? 'bg-purple-500' : 'bg-purple-400'
-          }`} />
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className={`absolute w-2 h-2 rounded-full opacity-30 animate-pulse ${
+                theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'
+              }`}
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2 + Math.random() * 2}s`,
+              }}
+            />
+          ))}
         </div>
         
         <div className="text-center z-10">
-          <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-500"></div>
+          <div className="relative w-24 h-24 mx-auto mb-8">
+            <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-blue-500"></div>
+            <div className="absolute inset-2 animate-spin rounded-full border-b-4 border-purple-500" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-sm font-bold ${
+              <span className={`text-lg font-bold ${
                 theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
               }`}>
                 {progress}%
@@ -474,13 +611,13 @@ export default function RippleGraph({ files }) {
             </div>
           </div>
           
-          <p className={`text-xl font-bold mb-2 ${
+          <p className={`text-2xl font-bold mb-4 ${
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>
             Building dependency graph...
           </p>
           
-          <p className={`text-sm mb-4 ${
+          <p className={`text-lg mb-6 ${
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
           }`}>
             {animationPhase === 'parsing' && '🔍 Parsing files...'}
@@ -491,21 +628,22 @@ export default function RippleGraph({ files }) {
             {animationPhase === 'complete' && '✨ Almost ready...'}
           </p>
           
-          <div className={`w-80 h-3 rounded-full mx-auto ${
+          <div className={`w-96 h-4 rounded-full mx-auto mb-4 ${
             theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
           }`}>
             <div 
-              className="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500 relative overflow-hidden"
+              className="h-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500 relative overflow-hidden"
               style={{ width: `${progress}%` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-ping" />
             </div>
           </div>
           
-          <p className={`text-xs mt-2 ${
+          <p className={`text-sm ${
             theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
           }`}>
-            Analyzing {files?.length || 0} files
+            Analyzing {files?.length || 0} files • Creating interactive visualization
           </p>
         </div>
       </div>
@@ -521,21 +659,21 @@ export default function RippleGraph({ files }) {
           <div className={`mb-6 ${
             theme === 'dark' ? 'text-red-400' : 'text-red-500'
           }`}>
-            <svg className="w-24 h-24 mx-auto animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-32 h-32 mx-auto animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className={`text-xl font-bold mb-3 ${
+          <h3 className={`text-2xl font-bold mb-4 ${
             theme === 'dark' ? 'text-red-400' : 'text-red-500'
           }`}>
             Error Building Graph
           </h3>
-          <p className={`text-sm mb-4 ${
+          <p className={`text-base mb-6 ${
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
           }`}>
             {error}
           </p>
-          <p className={`text-xs ${
+          <p className={`text-sm ${
             theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
           }`}>
             Try uploading a project with JavaScript or TypeScript files
@@ -551,19 +689,19 @@ export default function RippleGraph({ files }) {
         theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
       }`}>
         <div className="text-center">
-          <div className={`mb-6 ${
+          <div className={`mb-8 ${
             theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
           }`}>
-            <svg className="w-24 h-24 mx-auto animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-32 h-32 mx-auto animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h3 className={`text-xl font-bold mb-3 ${
+          <h3 className={`text-2xl font-bold mb-4 ${
             theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
           }`}>
             No files to analyze
           </h3>
-          <p className={`text-sm ${
+          <p className={`text-base ${
             theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
           }`}>
             Upload a codebase to see the dependency graph
@@ -591,13 +729,13 @@ export default function RippleGraph({ files }) {
         attributionPosition="bottom-left"
         className={theme === 'dark' ? 'dark' : ''}
         minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        maxZoom={3}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
       >
         <Background 
           color={theme === 'dark' ? '#374151' : '#e5e7eb'} 
-          gap={25} 
-          size={1.5}
+          gap={30} 
+          size={2}
           variant="dots"
         />
         <Controls 
@@ -618,110 +756,139 @@ export default function RippleGraph({ files }) {
         
         <Panel position="top-left" className="space-y-4">
           {/* Enhanced Graph Statistics */}
-          <div className={`p-5 rounded-xl shadow-2xl backdrop-blur-md border transition-all duration-300 ${
-            theme === 'dark' 
-              ? 'bg-gray-800/95 border-gray-700/50 shadow-gray-900/50' 
-              : 'bg-white/95 border-gray-200/50 shadow-gray-500/20'
-          }`}>
-            <h3 className={`font-bold text-base mb-4 flex items-center ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
+          {showStats && (
+            <div className={`p-6 rounded-2xl shadow-2xl backdrop-blur-md border transition-all duration-300 ${
+              theme === 'dark' 
+                ? 'bg-gray-800/95 border-gray-700/50 shadow-gray-900/50' 
+                : 'bg-white/95 border-gray-200/50 shadow-gray-500/20'
             }`}>
-              <span className="mr-2 text-xl animate-pulse">📊</span>
-              Dependency Graph
-            </h3>
-            {stats && (
-              <div className={`text-sm space-y-3 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center">
-                    <span className="mr-2">📁</span>
-                    Files:
-                  </span>
-                  <span className={`font-mono font-bold px-2 py-1 rounded ${
-                    theme === 'dark' ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
-                  }`}>
-                    {stats.fileNodes}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center">
-                    <span className="mr-2">⚡</span>
-                    Functions:
-                  </span>
-                  <span className={`font-mono font-bold px-2 py-1 rounded ${
-                    theme === 'dark' ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'
-                  }`}>
-                    {stats.functionNodes}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center">
-                    <span className="mr-2">📥</span>
-                    Imports:
-                  </span>
-                  <span className={`font-mono font-bold px-2 py-1 rounded ${
-                    theme === 'dark' ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-100 text-orange-600'
-                  }`}>
-                    {stats.importEdges}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center">
-                    <span className="mr-2">🔗</span>
-                    Calls:
-                  </span>
-                  <span className={`font-mono font-bold px-2 py-1 rounded ${
-                    theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-600'
-                  }`}>
-                    {stats.callEdges}
-                  </span>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`font-bold text-lg flex items-center ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
+                  <span className="mr-3 text-2xl animate-pulse">📊</span>
+                  Graph Statistics
+                </h3>
+                <button
+                  onClick={() => setShowStats(false)}
+                  className={`p-1 rounded-lg transition-colors ${
+                    theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  ✕
+                </button>
               </div>
-            )}
-          </div>
+              {stats && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={`p-3 rounded-xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-blue-900/30 hover:bg-blue-900/40' : 'bg-blue-100 hover:bg-blue-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center text-sm">
+                        <span className="mr-2 text-lg">📁</span>
+                        Files
+                      </span>
+                      <span className={`font-mono font-bold text-lg ${
+                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                      }`}>
+                        {stats.fileNodes}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-purple-900/30 hover:bg-purple-900/40' : 'bg-purple-100 hover:bg-purple-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center text-sm">
+                        <span className="mr-2 text-lg">⚡</span>
+                        Functions
+                      </span>
+                      <span className={`font-mono font-bold text-lg ${
+                        theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                      }`}>
+                        {stats.functionNodes}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-orange-900/30 hover:bg-orange-900/40' : 'bg-orange-100 hover:bg-orange-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center text-sm">
+                        <span className="mr-2 text-lg">📥</span>
+                        Imports
+                      </span>
+                      <span className={`font-mono font-bold text-lg ${
+                        theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
+                      }`}>
+                        {stats.importEdges}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-xl transition-all duration-300 ${
+                    theme === 'dark' ? 'bg-green-900/30 hover:bg-green-900/40' : 'bg-green-100 hover:bg-green-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center text-sm">
+                        <span className="mr-2 text-lg">🔗</span>
+                        Calls
+                      </span>
+                      <span className={`font-mono font-bold text-lg ${
+                        theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                      }`}>
+                        {stats.callEdges}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Enhanced Layout Controls */}
-          <div className={`p-5 rounded-xl shadow-2xl backdrop-blur-md border transition-all duration-300 ${
+          <div className={`p-6 rounded-2xl shadow-2xl backdrop-blur-md border transition-all duration-300 ${
             theme === 'dark' 
               ? 'bg-gray-800/95 border-gray-700/50 shadow-gray-900/50' 
               : 'bg-white/95 border-gray-200/50 shadow-gray-500/20'
           }`}>
-            <h4 className={`font-bold text-base mb-4 flex items-center ${
+            <h4 className={`font-bold text-lg mb-4 flex items-center ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              <span className="mr-2 text-xl">🎛️</span>
-              Layout
+              <span className="mr-3 text-2xl">🎛️</span>
+              Layout Controls
             </h4>
             <div className="space-y-3">
               <button
                 onClick={() => onLayout('TB')}
-                className={`w-full text-sm px-4 py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
+                className={`w-full text-sm px-5 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center ${
                   layoutDirection === 'TB'
                     ? theme === 'dark'
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25'
-                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 scale-105'
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105'
                     : theme === 'dark'
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md hover:scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md hover:scale-105'
                 }`}
               >
-                <span className="mr-2">⬇️</span>
+                <span className="mr-3 text-lg">⬇️</span>
                 Top to Bottom
               </button>
               <button
                 onClick={() => onLayout('LR')}
-                className={`w-full text-sm px-4 py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
+                className={`w-full text-sm px-5 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center ${
                   layoutDirection === 'LR'
                     ? theme === 'dark'
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25'
-                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 scale-105'
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105'
                     : theme === 'dark'
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md hover:scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md hover:scale-105'
                 }`}
               >
-                <span className="mr-2">➡️</span>
+                <span className="mr-3 text-lg">➡️</span>
                 Left to Right
               </button>
             </div>
@@ -729,36 +896,52 @@ export default function RippleGraph({ files }) {
           
           {/* Enhanced Ripple Effect Info */}
           {selectedNode && (
-            <div className={`p-5 rounded-xl shadow-2xl backdrop-blur-md border transition-all duration-300 animate-in slide-in-from-left ${
+            <div className={`p-6 rounded-2xl shadow-2xl backdrop-blur-md border transition-all duration-300 animate-in slide-in-from-left ${
               theme === 'dark' 
                 ? 'bg-gray-800/95 border-gray-700/50 shadow-gray-900/50' 
                 : 'bg-white/95 border-gray-200/50 shadow-gray-500/20'
             }`}>
-              <h4 className={`font-bold text-base mb-3 flex items-center ${
+              <h4 className={`font-bold text-lg mb-4 flex items-center ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                <span className="mr-2 text-xl animate-bounce">🌊</span>
-                Ripple Effect
+                <span className="mr-3 text-2xl animate-bounce">🌊</span>
+                Ripple Effect Active
               </h4>
-              <div className={`text-sm mb-4 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              <div className={`text-base mb-4 p-3 rounded-lg ${
+                theme === 'dark' ? 'text-gray-300 bg-gray-700/50' : 'text-gray-600 bg-gray-100'
               }`}>
                 Showing <span className="font-bold text-blue-500">{highlightedNodes.size}</span> connected nodes
               </div>
               <button
                 onClick={clearSelection}
-                className={`w-full text-sm px-4 py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
+                className={`w-full text-sm px-5 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center ${
                   theme === 'dark'
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md hover:scale-105'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md hover:scale-105'
                 }`}
               >
-                <span className="mr-2">✨</span>
+                <span className="mr-3 text-lg">✨</span>
                 Clear Selection
               </button>
             </div>
           )}
         </Panel>
+        
+        {/* Toggle Stats Button */}
+        {!showStats && (
+          <Panel position="top-left">
+            <button
+              onClick={() => setShowStats(true)}
+              className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+                theme === 'dark'
+                  ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                  : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+              }`}
+            >
+              <span className="text-xl">📊</span>
+            </button>
+          </Panel>
+        )}
       </ReactFlow>
       
       {showTooltip && tooltipData && (

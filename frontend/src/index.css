@@ -3,6 +3,26 @@
 @tailwind utilities;
 
 /* Custom animations */
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px currentColor; }
+  50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+}
+
+@keyframes wave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -28,6 +48,22 @@
 
 .animate-ripple {
   animation: ripple 0.6s ease-out;
+}
+
+.animate-sparkle {
+  animation: sparkle 1s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-wave {
+  animation: wave 2s linear infinite;
 }
 
 @layer base {
@@ -152,7 +188,7 @@ button:hover {
 
 /* Enhanced ReactFlow styles for dark mode */
 .react-flow.dark {
-  background: #111827;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%);
 }
 
 .react-flow.dark .react-flow__node {
@@ -160,27 +196,71 @@ button:hover {
 }
 
 .react-flow.dark .react-flow__edge {
-  stroke: #6b7280;
+  stroke: #9ca3af;
+}
+
+.react-flow.dark .react-flow__edge.react-flow__edge-selected {
+  stroke: #60a5fa;
 }
 
 .react-flow.dark .react-flow__controls {
-  background: rgba(31, 41, 55, 0.9);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
 }
 
 .react-flow.dark .react-flow__controls button {
-  background: rgba(55, 65, 81, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: rgba(55, 65, 81, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.5);
   color: #f3f4f6;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .react-flow.dark .react-flow__controls button:hover {
-  background: rgba(75, 85, 99, 0.8);
+  background: rgba(75, 85, 99, 0.9);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .react-flow.dark .react-flow__minimap {
-  background: rgba(31, 41, 55, 0.9);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+
+/* Light mode enhancements */
+.react-flow:not(.dark) {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 50%, #f3f4f6 100%);
+}
+
+.react-flow:not(.dark) .react-flow__controls {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+
+.react-flow:not(.dark) .react-flow__controls button {
+  background: rgba(249, 250, 251, 0.9);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.react-flow:not(.dark) .react-flow__controls button:hover {
+  background: rgba(243, 244, 246, 0.9);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow:not(.dark) .react-flow__minimap {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
 }
 
 /* Smooth transitions for all interactive elements */
@@ -192,12 +272,93 @@ button:hover {
 /* Enhanced edge animations */
 .react-flow__edge.animated {
   stroke-dasharray: 5;
-  animation: dashdraw 0.5s linear infinite;
+  animation: dashdraw 1s linear infinite;
+}
+
+.react-flow__edge.react-flow__edge-selected {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
 @keyframes dashdraw {
   to {
-    stroke-dashoffset: -10;
+    stroke-dashoffset: -20;
+  }
+}
+
+/* Node hover effects */
+.react-flow__node:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.react-flow__node.react-flow__node-selected {
+  filter: brightness(1.2) saturate(1.2);
+  transform: scale(1.1);
+}
+
+/* Enhanced panel styles */
+.react-flow__panel {
+  z-index: 1000;
+}
+
+/* Tooltip enhancements */
+.tooltip-enter {
+  opacity: 0;
+  transform: scale(0.9) translateY(-10px);
+}
+
+.tooltip-enter-active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: all 0.2s ease-out;
+}
+
+.tooltip-exit {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.tooltip-exit-active {
+  opacity: 0;
+  transform: scale(0.9) translateY(-10px);
+  transition: all 0.2s ease-in;
+}
+
+/* Custom scrollbar for panels */
+.react-flow__panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.react-flow__panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.react-flow__panel::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.react-flow__panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.8);
+}
+
+/* Particle effects */
+.particle {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 1;
   }
 }
 
