@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { uploadRouter } from './routes/upload.js';
+import { askRouter } from './routes/ask.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -8,6 +9,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use('/api', uploadRouter);
+app.use('/api', askRouter);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);

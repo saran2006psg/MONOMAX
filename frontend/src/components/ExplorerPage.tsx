@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RotateCcw, FolderOpen, Code, Users, Clock, GitBranch } from 'lucide-react';
+import { Search, RotateCcw, FolderOpen, Code, Users, Clock, GitBranch, MessageCircle } from 'lucide-react';
 import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { FunctionList } from './FunctionList';
 import RippleGraph from './RippleGraph';
 import { ThemeToggle } from './ThemeToggle';
+import { Chatbox } from './Chatbox';
 import { ProjectData, FileNode, CodeSymbol, SearchResult } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import axios from 'axios';
@@ -22,6 +23,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [activeTab, setActiveTab] = useState<'explorer' | 'graph'>('explorer');
   const [, setIsSearching] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { theme } = useTheme();
 
   const handleFileSelect = async (file: FileNode) => {
@@ -168,6 +170,18 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
             </div>
             
             <ThemeToggle />
+            
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                theme === 'dark' 
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  : 'bg-purple-500 hover:bg-purple-600 text-white'
+              } hover:scale-105 shadow-lg`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Ask AI</span>
+            </button>
             
             <div className={`flex rounded-lg border ${
               theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
@@ -339,6 +353,12 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
           </div>
         )}
       </div>
+      
+      {/* AI Chatbox */}
+      <Chatbox 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
     </div>
   );
 };
