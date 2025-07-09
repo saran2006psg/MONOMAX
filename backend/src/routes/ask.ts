@@ -1,10 +1,10 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { answerQuestion } from '../utils/ask.js';
 
 const router = express.Router();
 
 // POST /api/ask - Answer questions about the codebase
-router.post('/ask', async (req, res) => {
+router.post('/ask', async (req: Request, res: Response) => {
   try {
     const { question } = req.body;
 
@@ -35,7 +35,7 @@ router.post('/ask', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in /api/ask:', error);
 
     // Handle specific error types
@@ -61,7 +61,7 @@ router.post('/ask', async (req, res) => {
 });
 
 // GET /api/ask/health - Health check for AI services
-router.get('/ask/health', async (req, res) => {
+router.get('/ask/health', async (req: Request, res: Response) => {
   try {
     const { QdrantClient } = await import('@qdrant/js-client-rest');
     const client = new QdrantClient({
@@ -89,7 +89,7 @@ router.get('/ask/health', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Health check failed:', error);
     res.status(500).json({
       success: false,

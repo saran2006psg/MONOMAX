@@ -1,0 +1,9 @@
+Hello World! This is a test file for the MONOMAX codebase navigator.
+
+function testFunction() {
+  console.log("Testing the application!");
+  return "success";
+}
+
+const testVariable = "test";
+export { testFunction, testVariable };

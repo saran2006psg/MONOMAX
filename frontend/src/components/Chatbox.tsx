@@ -72,7 +72,7 @@ export const Chatbox: React.FC<ChatboxProps> = ({ isOpen, onClose }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/ask', {
+      const response = await axios.post('http://localhost:3001/api/ask', {
         question: userMessage.content
       });
 

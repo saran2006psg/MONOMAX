@@ -3,7 +3,19 @@ import multer from 'multer';
 import { parseCodebase } from '../services/codeParser.js';
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/zip' || file.originalname.endsWith('.zip')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .zip files are allowed'));
+    }
+  }
+});
 
 router.post('/upload', upload.single('codebase'), async (req, res) => {
   try {
@@ -11,11 +23,16 @@ router.post('/upload', upload.single('codebase'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    console.log('📁 Processing uploaded file:', req.file.originalname);
     const result = await parseCodebase(req.file.path);
+    console.log('✅ Successfully processed codebase');
     res.json(result);
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Failed to process codebase' });
+    console.error('❌ Upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process codebase',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

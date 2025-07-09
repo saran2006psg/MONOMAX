@@ -12,9 +12,12 @@ export async function initializeParser() {
     
     await Parser.init({
       locateFile(scriptName, scriptDirectory) {
-        // Use CDN for Tree-sitter files with fallback
+        // Use local public files first, then CDN as fallback
         if (scriptName === 'tree-sitter.wasm') {
-          return 'https://cdn.jsdelivr.net/npm/web-tree-sitter@0.20.8/tree-sitter.wasm';
+          return '/tree-sitter.wasm';
+        }
+        if (scriptName === 'tree-sitter-javascript.wasm') {
+          return '/tree-sitter-javascript.wasm';
         }
         return scriptDirectory + scriptName;
       }
@@ -22,15 +25,21 @@ export async function initializeParser() {
     
     parser = new Parser();
     
-    // Load JavaScript language grammar with fallback
+    // Load JavaScript language grammar with local files first
     try {
-      const JavaScript = await Parser.Language.load('https://cdn.jsdelivr.net/npm/tree-sitter-javascript@0.20.1/tree-sitter-javascript.wasm');
+      const JavaScript = await Parser.Language.load('/tree-sitter-javascript.wasm');
       parser.setLanguage(JavaScript);
-      console.log('JavaScript grammar loaded successfully');
+      console.log('✅ JavaScript grammar loaded successfully from local files');
     } catch (error) {
-      console.warn('Failed to load JavaScript grammar, using fallback parsing');
-      // We'll use regex-based parsing as fallback
-      parser = null;
+      console.warn('Failed to load local JavaScript grammar, trying CDN...');
+      try {
+        const JavaScript = await Parser.Language.load('https://cdn.jsdelivr.net/npm/tree-sitter-javascript@0.20.1/tree-sitter-javascript.wasm');
+        parser.setLanguage(JavaScript);
+        console.log('✅ JavaScript grammar loaded successfully from CDN');
+      } catch (cdnError) {
+        console.warn('Failed to load JavaScript grammar from CDN, using fallback parsing');
+        parser = null;
+      }
     }
     
     isInitialized = true;

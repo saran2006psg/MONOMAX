@@ -3,7 +3,7 @@ import { Search, RotateCcw, FolderOpen, Code, Users, Clock, GitBranch, MessageCi
 import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { FunctionList } from './FunctionList';
-import RippleGraph from './RippleGraph';
+import RippleGraph from './RippleGraph.jsx';
 import { ThemeToggle } from './ThemeToggle';
 import { Chatbox } from './Chatbox';
 import { ProjectData, FileNode, CodeSymbol, SearchResult } from '../types';
@@ -37,7 +37,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
         setCurrentSymbols(parsedFile.symbols);
       } else {
         try {
-          const response = await axios.get(`/api/file-content?path=${encodeURIComponent(file.path)}`);
+          const response = await axios.get(`http://localhost:3001/api/file-content?path=${encodeURIComponent(file.path)}`);
           setFileContent(response.data.content);
           setCurrentSymbols(response.data.symbols || []);
         } catch (error) {
@@ -62,7 +62,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
 
     setIsSearching(true);
     try {
-      const response = await axios.get(`/api/search?term=${encodeURIComponent(term)}`);
+      const response = await axios.get(`http://localhost:3001/api/search?term=${encodeURIComponent(term)}`);
       setSearchResults(response.data);
     } catch (error) {
       console.error('Search error:', error);

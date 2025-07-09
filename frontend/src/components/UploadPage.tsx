@@ -62,9 +62,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onUploadComplete }) => {
 
     try {
       const formData = new FormData();
-      formData.append('zipFile', file);
+      formData.append('codebase', file);
 
-      const response = await axios.post('/api/upload', formData, {
+      const response = await axios.post('http://localhost:3001/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
