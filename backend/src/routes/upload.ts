@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { parseCodebase } from '../services/codeParser.js';
+import { CodeParser } from '../services/codeParser.js';
 
 const router = express.Router();
 const upload = multer({ 
@@ -24,7 +24,8 @@ router.post('/upload', upload.single('codebase'), async (req, res) => {
     }
 
     console.log('📁 Processing uploaded file:', req.file.originalname);
-    const result = await parseCodebase(req.file.path);
+    const parser = new CodeParser();
+    const result = await parser.parseProject(req.file.path);
     console.log('✅ Successfully processed codebase');
     res.json(result);
   } catch (error) {

@@ -3,7 +3,7 @@ import { Search, RotateCcw, FolderOpen, Code, Users, Clock, GitBranch, MessageCi
 import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { FunctionList } from './FunctionList';
-import RippleGraph from './RippleGraph.jsx';
+import RippleGraph from './RippleGraph';
 import { ThemeToggle } from './ThemeToggle';
 import { Chatbox } from './Chatbox';
 import { ProjectData, FileNode, CodeSymbol, SearchResult } from '../types';
@@ -25,6 +25,11 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
   const [, setIsSearching] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { theme } = useTheme();
+  // Unwrap single root folder for file tree and search lookup
+  const fileTreeData =
+    projectData.files.length === 1 && projectData.files[0].type === 'folder'
+      ? projectData.files[0].children || []
+      : projectData.files;
 
   const handleFileSelect = async (file: FileNode) => {
     if (file.type === 'file') {
@@ -257,8 +262,9 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
                   Navigate through your codebase
                 </p>
               </div>
+              {/* Unwrap root folder if present */}
               <FileTree
-                files={projectData.files}
+                files={fileTreeData}
                 selectedFile={selectedFile?.path}
                 onFileSelect={handleFileSelect}
               />
@@ -307,7 +313,7 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
                               : 'hover:bg-gray-50 border border-gray-200'
                           }`}
                           onClick={() => {
-                            const file = projectData.files.find(f => f.path === result.file);
+                            const file = fileTreeData.find(f => f.path === result.file);
                             if (file) handleFileSelect(file);
                           }}
                         >
@@ -356,8 +362,11 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({ projectData, onReset
       
       {/* AI Chatbox */}
       <Chatbox 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        projectData={projectData}
+        selectedFile={selectedFile}
+        fileContent={fileContent}
       />
     </div>
   );

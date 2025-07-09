@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -13,10 +13,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['lucide-react'],
-    include: ['web-tree-sitter', 'dagre', 'graphlib'],
-  },
-  define: {
-    global: 'globalThis',
+    exclude: ['@dqbd/tiktoken'],
   },
 });

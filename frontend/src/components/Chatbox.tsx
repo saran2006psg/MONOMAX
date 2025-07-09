@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, AlertCircle, FileText, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 import { useTheme } from '../hooks/useTheme';
+import { ProjectData, FileNode } from '../types';
 
 interface Message {
   id: string;
@@ -20,9 +21,18 @@ interface Message {
 interface ChatboxProps {
   isOpen: boolean;
   onClose: () => void;
+  projectData: ProjectData;
+  selectedFile: FileNode | undefined;
+  fileContent: string;
 }
 
-export const Chatbox: React.FC<ChatboxProps> = ({ isOpen, onClose }) => {
+export const Chatbox: React.FC<ChatboxProps> = ({ 
+  isOpen, 
+  onClose, 
+  projectData, 
+  selectedFile, 
+  fileContent 
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);

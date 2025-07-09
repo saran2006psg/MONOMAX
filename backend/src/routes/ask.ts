@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
-import { answerQuestion } from '../utils/ask.js';
+import { FileUtils } from '../utils/fileUtils.js';
+import { CodeParser } from '../services/codeParser.js';
 
 const router = express.Router();
 
@@ -23,8 +24,12 @@ router.post('/ask', async (req: Request, res: Response) => {
 
     console.log(`📝 Received question: ${question}`);
 
-    // Get answer from AI
-    const result = await answerQuestion(question.trim());
+    // Simple mock response since AI service isn't set up yet
+    const result = {
+      answer: `I understand you're asking: "${question}". The AI service is not fully configured yet, but I can help you navigate your codebase. Please make sure your codebase is properly uploaded and parsed first.`,
+      sources: [],
+      confidence: 0.5
+    };
 
     res.json({
       success: true,
@@ -94,6 +99,73 @@ router.get('/ask/health', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Service health check failed',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/file-content - Get file content and symbols
+router.get('/file-content', async (req: Request, res: Response) => {
+  try {
+    const { path } = req.query;
+    
+    if (!path || typeof path !== 'string') {
+      return res.status(400).json({
+        error: 'File path is required'
+      });
+    }
+
+    // Read file content
+    const content = await FileUtils.readFile(path);
+    
+    // Parse symbols from the file
+    const parser = new CodeParser();
+    const symbols = await parser.parseFileSymbols(path);
+    
+    res.json({
+      success: true,
+      content,
+      symbols,
+      path
+    });
+    
+  } catch (error: any) {
+    console.error('❌ Error reading file:', error);
+    res.status(500).json({
+      error: 'Failed to read file',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/search - Search through codebase
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const { term } = req.query;
+    
+    if (!term || typeof term !== 'string') {
+      return res.status(400).json({
+        error: 'Search term is required'
+      });
+    }
+
+    // This is a simple mock search for now
+    // In a real implementation, this would search through indexed files
+    const results = [
+      {
+        file: 'example.ts',
+        line: 10,
+        symbolKind: 'function',
+        context: `function ${term}() { // Example search result }`
+      }
+    ];
+
+    res.json(results);
+    
+  } catch (error: any) {
+    console.error('❌ Error searching:', error);
+    res.status(500).json({
+      error: 'Failed to search',
       details: error.message
     });
   }
